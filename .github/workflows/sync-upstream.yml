@@ -2,7 +2,7 @@ name: Sync Upstream Plugin
 
 on:
   schedule:
-    - cron: '0 8 * * 1'  # Jeden Montag um 08:00 UTC
+    - cron: '0 8 * * *'  # Taeglich um 08:00 UTC
   workflow_dispatch:       # Manuell ausfuehrbar
 
 jobs:
