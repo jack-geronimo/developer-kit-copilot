@@ -1,0 +1,87 @@
+name: Sync Upstream Plugin
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Jeden Montag um 08:00 UTC
+  workflow_dispatch:       # Manuell ausfuehrbar
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone upstream
+        run: |
+          git clone --depth 1 https://github.com/giuseppe-trisciuoglio/developer-kit.git /tmp/upstream
+
+      - name: Check for changes
+        id: check
+        run: |
+          UPSTREAM_SRC="/tmp/upstream/plugins/developer-kit-core"
+          LOCAL_DST="plugins/developer-kit-core"
+
+          # Vergleiche (ohne .github/ und .DS_Store)
+          DIFF=$(diff -rq \
+            --exclude='.github' \
+            --exclude='.DS_Store' \
+            "$UPSTREAM_SRC" "$LOCAL_DST" 2>/dev/null || true)
+
+          if [ -z "$DIFF" ]; then
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+            echo "Keine Aenderungen."
+          else
+            echo "changes=true" >> "$GITHUB_OUTPUT"
+            CHANGE_COUNT=$(echo "$DIFF" | wc -l)
+            echo "change_count=$CHANGE_COUNT" >> "$GITHUB_OUTPUT"
+            echo "$CHANGE_COUNT Datei(en) geaendert."
+          fi
+
+      - name: Sync files
+        if: steps.check.outputs.changes == 'true'
+        run: |
+          UPSTREAM_SRC="/tmp/upstream/plugins/developer-kit-core"
+          LOCAL_DST="plugins/developer-kit-core"
+
+          # Alle Plugin-Inhalte synchronisieren
+          rsync -a \
+            --exclude='.github/' \
+            --exclude='.DS_Store' \
+            --delete \
+            "$UPSTREAM_SRC/" "$LOCAL_DST/"
+
+          # Copilot-Manifest aus Claude Code-Manifest generieren
+          mkdir -p "$LOCAL_DST/.github"
+          cp "$LOCAL_DST/.claude-plugin/plugin.json" "$LOCAL_DST/.github/plugin.json"
+
+      - name: Read upstream version
+        if: steps.check.outputs.changes == 'true'
+        id: version
+        run: |
+          VERSION=$(python3 -c "
+          import json
+          with open('plugins/developer-kit-core/.claude-plugin/plugin.json') as f:
+              print(json.load(f).get('version', 'unknown'))
+          ")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create Pull Request
+        if: steps.check.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/sync-upstream
+          delete-branch: true
+          title: "chore: sync upstream developer-kit v${{ steps.version.outputs.version }}"
+          body: |
+            Automatischer Sync vom [Original-Repository](https://github.com/giuseppe-trisciuoglio/developer-kit).
+
+            **Upstream-Version:** ${{ steps.version.outputs.version }}
+            **Geaenderte Dateien:** ${{ steps.check.outputs.change_count }}
+
+            Bitte pruefen und mergen.
+          commit-message: "chore: sync upstream developer-kit v${{ steps.version.outputs.version }}"

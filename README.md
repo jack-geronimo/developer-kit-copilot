@@ -30,6 +30,26 @@ Enable `chat.plugins.enabled` in settings, then search for `@agentPlugins develo
     └── hooks/                          # Safety hooks
 ```
 
+## Upstream Sync
+
+This plugin auto-syncs from the [original repository](https://github.com/giuseppe-trisciuoglio/developer-kit) via GitHub Action (weekly) or manually:
+
+```bash
+./scripts/sync-upstream.sh            # Sync ausfuehren
+./scripts/sync-upstream.sh --dry-run  # Nur Aenderungen anzeigen
+```
+
+The sync copies all plugin files 1:1 and generates `.github/plugin.json` from `.claude-plugin/plugin.json`.
+
+### Compatibility Notes
+
+| Component | Claude Code | Copilot CLI |
+|-----------|------------|-------------|
+| Agents (.md) | Yes | Yes |
+| Commands (.md) | Yes | Yes |
+| Skills (.md) | Yes | Yes |
+| Hooks (.json + .py) | Yes | Ignored |
+
 ## Credits
 
 - **Original Author**: Giuseppe Trisciuoglio
