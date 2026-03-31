@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "Developer Kit Core - agents and commands for code review, refactoring, debugging, architecture, and documentation. Restructured for Copilot CLI compatibility.",
-    "version": "2.6.2"
+    "version": "2.7.2"
   },
   "plugins": [
     {
       "name": "developer-kit",
       "description": "Core agents and commands required by all Developer Kit plugins",
-      "version": "2.6.2",
+      "version": "2.7.2",
       "source": "./plugins/developer-kit-core"
     }
   ]

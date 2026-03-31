@@ -59,7 +59,7 @@ jobs:
           mkdir -p "$LOCAL_DST/.github"
           cp "$LOCAL_DST/.claude-plugin/plugin.json" "$LOCAL_DST/.github/plugin.json"
 
-      - name: Read upstream version
+      - name: Update version in marketplace.json
         if: steps.check.outputs.changes == 'true'
         id: version
         run: |
@@ -69,6 +69,20 @@ jobs:
               print(json.load(f).get('version', 'unknown'))
           ")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          # Version in marketplace.json aktualisieren
+          python3 -c "
+          import json
+          with open('.github/plugin/marketplace.json', 'r') as f:
+              data = json.load(f)
+          data['metadata']['version'] = '$VERSION'
+          for plugin in data.get('plugins', []):
+              plugin['version'] = '$VERSION'
+          with open('.github/plugin/marketplace.json', 'w') as f:
+              json.dump(data, f, indent=2)
+              f.write('\n')
+          "
+          echo "marketplace.json auf Version $VERSION aktualisiert."
 
       - name: Create Pull Request
         if: steps.check.outputs.changes == 'true'

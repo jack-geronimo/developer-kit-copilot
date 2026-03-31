@@ -93,15 +93,29 @@ echo "[3/4] Aktualisiere Copilot-Manifest (.github/plugin.json)..."
 mkdir -p "$LOCAL_DST/.github"
 cp "$LOCAL_DST/.claude-plugin/plugin.json" "$LOCAL_DST/.github/plugin.json"
 
-# 4. Upstream-Version auslesen
+# 4. Upstream-Version in marketplace.json uebertragen
+MARKETPLACE_JSON="$REPO_ROOT/.github/plugin/marketplace.json"
 UPSTREAM_VERSION=$(python3 -c "
-import json, sys
+import json
 with open('$LOCAL_DST/.claude-plugin/plugin.json') as f:
     print(json.load(f).get('version', 'unknown'))
 " 2>/dev/null || echo "unknown")
 
+echo "[4/5] Aktualisiere marketplace.json auf Version $UPSTREAM_VERSION..."
+python3 -c "
+import json
+with open('$MARKETPLACE_JSON', 'r') as f:
+    data = json.load(f)
+data['metadata']['version'] = '$UPSTREAM_VERSION'
+for plugin in data.get('plugins', []):
+    plugin['version'] = '$UPSTREAM_VERSION'
+with open('$MARKETPLACE_JSON', 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+"
+
 echo ""
-echo "[4/4] Sync abgeschlossen."
+echo "[5/5] Sync abgeschlossen."
 echo ""
 echo "  Upstream-Version: $UPSTREAM_VERSION"
 echo "  Geaenderte Dateien: $CHANGE_COUNT"
