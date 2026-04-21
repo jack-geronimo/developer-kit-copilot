@@ -101,4 +101,3 @@ jobs:
 
             Bitte pruefen und mergen.
           commit-message: "chore: sync upstream developer-kit v${{ steps.version.outputs.version }}"
-          reviewers: jack-geronimo
