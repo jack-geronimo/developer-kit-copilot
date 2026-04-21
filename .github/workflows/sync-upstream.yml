@@ -89,6 +89,7 @@ jobs:
         id: create-pr
         uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.SYNC_UPSTREAM_PAT }}
           branch: chore/sync-upstream
           delete-branch: true
           title: "chore: sync upstream developer-kit v${{ steps.version.outputs.version }}"
